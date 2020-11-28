@@ -24,6 +24,7 @@
     "url": "https://github.com/browsercaptures/chess.git"
   },
   "dependencies": {
+    "mongodb": "^3.6.3",
     "node-7z": "^2.1.2",
     "node-fetch": "^2.6.1"
   },
