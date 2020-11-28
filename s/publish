@@ -1,0 +1,6 @@
+
+node s/bump.js
+
+cat pgens.js lib/pgen.js > lib/pgens.js
+
+npm publish --access=public

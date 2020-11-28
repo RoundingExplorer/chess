@@ -1,0 +1,8 @@
+
+git config credential.helper 'cache --timeout=86400'
+
+echo "#!/usr/bin/env node" > pgens.js
+
+cat pgen.js >> pgens.js
+
+git add . -A ; git commit -m "$1" ; git push --force origin master && git push --force gitlab master
