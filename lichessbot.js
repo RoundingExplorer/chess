@@ -167,15 +167,16 @@ class LichessBot{
 							console.log("bestmove", bestmove)
 							
 							if(bestmove){
-								this.thinking = false
+								this.thinking = false								
 								lichessutils.postApi({
             						url: lichessutils.makeBotMoveUrl(id, bestmove), log: this.logApi, token: this.token,
             						callback: content => {
 										console.log("make move response", content)
-										this.gameStreamers[id].close()										
-										this.eventStreamer.stream()
+										
 									}									
-								})
+								})					
+								this.gameStreamers[id].close()										
+								this.eventStreamer.stream()
 							}
 						})
 					}else{
