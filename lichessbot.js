@@ -164,19 +164,18 @@ class LichessBot{
 						
 						engine.gothen(timecontrol).then(result => {
 							let bestmove = result.bestmove
-							console.log("bestmove", bestmove)
+							console.log("bestmove", id, bestmove)
 							
 							if(bestmove){
 								this.thinking = false								
 								lichessutils.postApi({
             						url: lichessutils.makeBotMoveUrl(id, bestmove), log: this.logApi, token: this.token,
             						callback: content => {
-										console.log("make move response", content)
-										
+										console.log("make move response", content)										
 									}									
 								})					
 								this.gameStreamers[id].close()										
-								this.eventStreamer.stream()
+								setTimeout(_ => this.eventStreamer.stream(), 3000)
 							}
 						})
 					}else{
