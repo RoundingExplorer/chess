@@ -180,10 +180,10 @@ class LichessBot{
 							engine.position("fen " + initialFen, moves)
 
 							let timecontrol = gameFull.timecontrol || {
-								wtime: gameState.wtime,
-								winc: gameState.winc,
-								btime: gameState.btime,
-								binc: gameState.binc
+								wtime: Math.max(gameState.wtime, this.correspondenceThinkingTime),
+								winc: 0,
+								btime: Math.max(gameState.btime, this.correspondenceThinkingTime),
+								binc: 0
 							}
 
 							console.log(timecontrol)
