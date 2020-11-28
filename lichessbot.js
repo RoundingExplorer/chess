@@ -21,6 +21,8 @@ class LichessBot{
 		
 		this.correspondenceThinkingTime = this.props.correspondenceThinkingTime || process.env.CORRESPONDENCE_THINKING_TIME || 60000
 		this.retryTimeout = this.props.retryTimeout || 10000
+		
+		this.realTimeLimit = this.props.realTimeLimit || parseInt(process.env.REAL_TIME_LIMIT || "600")
 	}
 	
 	acceptChallenge(challenge){
@@ -33,6 +35,12 @@ class LichessBot{
 	}
 	
 	challenge(challenge){
+		if(challenge.timeControl.limit < this.realTimeLimit){
+			console.log("refused to play real time game with less than", this.realTimeLimit, "initial time", challenge.timeControl.limit)
+			
+			return
+		}
+		
 		this.acceptChallenge(challenge)
 	}
 	
