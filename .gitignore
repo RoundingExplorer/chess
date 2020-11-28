@@ -8,3 +8,5 @@ log
 /unzip/*
 
 !/unzip/ReadMe.md
+
+stockfish*

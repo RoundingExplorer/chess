@@ -1,7 +1,9 @@
 const fetchutils = require('./fetchutils.js')
 const lichessutils = require('./lichessutils.js')
 const { makeUciMoves } = require('./scalachess.js')
+const { UciEngine } = require('./uci.js')
 const fs = require('fs')
+const path = require('path')
 
 class LichessBot{
 	constructor(props){
@@ -13,6 +15,7 @@ class LichessBot{
 		this.logApi = this.props.logApi || false
 		
 		this.gameStreamers = {}
+		this.thinking = false
 	}
 	
 	acceptChallenge(challenge){
@@ -28,10 +31,14 @@ class LichessBot{
 		this.acceptChallenge(challenge)
 	}
 	
-	playGame(id){
+	playGame(id){		
+		if(this.thinking) return
+		
 		console.log("playing game", id)
 		
 		let gameFull, gameState, variant, initialFen, currentFen, moves, turn
+		
+		let engine = new UciEngine(path.join(__dirname, "stockfish12m"))
 		
 		this.gameStreamers[id] = new fetchutils.NdjsonStreamer({
 			url: lichessutils.streamBotGameUrl(id),
@@ -82,6 +89,15 @@ class LichessBot{
 						
 							this.gameStreamers[id].close()
 						}
+						
+						if(gameFull.speed == "correspondence"){
+							gameFull.timecontrol = {
+								wtime: 60000,
+								winc: 0,
+								btime: 60000,
+								binc: 0
+							}
+						}
 					}
 				}else if(blob.type == "gameState"){
 					console.log("game state", id)					
@@ -116,6 +132,36 @@ class LichessBot{
 					
 					if( ((turn == "w") && gameFull.botWhite) || ((turn == "b") && gameFull.botBlack) ){
 						console.log("bot turn", id)
+						
+						engine.position("fen " + initialFen, moves)
+						
+						let timecontrol = gameFull.timecontrol || {
+							wtime: gameState.wtime,
+							winc: gameState.winc,
+							btime: gameState.btime,
+							binc: gameState.binc
+						}
+						
+						this.eventStreamer.close()
+						
+						this.thinking = true
+						
+						engine.gothen(timecontrol).then(result => {
+							let bestmove = result.bestmove
+							console.log("bestmove", bestmove)
+							
+							if(bestmove){
+								lichessutils.postApi({
+            						url: lichessutils.makeBotMoveUrl(id, bestmove), log: this.logApi, token: this.token,
+            						callback: content => {
+										console.log("make move response", content)
+										this.gameStreamers[id].close()
+										this.thinking = false
+										this.eventStreamer.stream()
+									}									
+								})
+							}
+						})
 					}else{
 						console.log("opponent turn", id)
 					}
