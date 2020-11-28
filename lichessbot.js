@@ -121,15 +121,6 @@ class LichessBot{
 								
 								return
 							}
-
-							if(gameFull.speed == "correspondence"){
-								gameFull.timecontrol = {
-									wtime: this.correspondenceThinkingTime,
-									winc: 0,
-									btime: this.correspondenceThinkingTime,
-									binc: 0
-								}
-							}
 						}
 					}else if(blob.type == "gameState"){
 						console.log("game state", id)					
@@ -138,6 +129,9 @@ class LichessBot{
 					}
 
 					if(blob.type != "chatLine"){
+						gameState.wtime = gameState.wtime || this.correspondenceThinkingTime
+						gameState.btime = gameState.btime || this.correspondenceThinkingTime
+						
 						moves = []
 
 						currentFen = initialFen
@@ -179,7 +173,7 @@ class LichessBot{
 
 							engine.position("fen " + initialFen, moves)
 
-							let timecontrol = gameFull.timecontrol || {
+							let timecontrol = {
 								wtime: Math.min(gameState.wtime, this.correspondenceThinkingTime),
 								winc: 0,
 								btime: Math.min(gameState.btime, this.correspondenceThinkingTime),
