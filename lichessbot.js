@@ -34,9 +34,20 @@ class LichessBot{
 		})
 	}
 	
+	declineChallenge(challenge){
+		console.log("declining challenge", challenge.id)
+		
+		lichessutils.postApi({
+			url: lichessutils.declineChallengeUrl(challenge.id), log: this.logApi, token: this.token,
+			callback: content => console.log(`decline challenge response: ${content}`)
+		})
+	}
+	
 	challenge(challenge){
 		if(challenge.timeControl.limit < this.realTimeLimit){
-			console.log("refused to play real time game with less than", this.realTimeLimit, "initial time", challenge.timeControl.limit)
+			console.log("declining", challenge.id, "real time game with less than", this.realTimeLimit, "initial time", challenge.timeControl.limit)
+			
+			this.declineChallenge(challenge)
 			
 			return
 		}

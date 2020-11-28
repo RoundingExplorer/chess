@@ -3,6 +3,7 @@ const fetch = require("node-fetch")
 const streamBotGameUrl = gameId => `https://lichess.org/api/bot/game/stream/${gameId}`
 const makeBotMoveUrl = (gameId, bestmove) => `https://lichess.org/api/bot/game/${gameId}/move/${bestmove}`
 const acceptChallengeUrl = challengeId => `https://lichess.org/api/challenge/${challengeId}/accept`
+const declineChallengeUrl = challengeId => `https://lichess.org/api/challenge/${challengeId}/decline`
 const postChatUrl = gameId => `https://lichess.org/api/bot/game/${gameId}/chat`
 const challengeUrl = username => `https://lichess.org/api/challenge/${username}`
 
@@ -56,6 +57,7 @@ if(typeof module != "undefined"){
 		streamBotGameUrl : streamBotGameUrl,
 		makeBotMoveUrl : makeBotMoveUrl,
 		acceptChallengeUrl : acceptChallengeUrl,
+		declineChallengeUrl: declineChallengeUrl,
 		postChatUrl : postChatUrl,
 		challengeUrl: challengeUrl,
 		streamEventsUrl : `https://lichess.org/api/stream/event`,
