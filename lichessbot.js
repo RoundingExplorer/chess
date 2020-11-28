@@ -94,9 +94,9 @@ class LichessBot{
 						
 						if(gameFull.speed == "correspondence"){
 							gameFull.timecontrol = {
-								wtime: this.co,
+								wtime: this.correspondenceThinkingTime,
 								winc: 0,
-								btime: 60000,
+								btime: this.correspondenceThinkingTime,
 								binc: 0
 							}
 						}
@@ -147,6 +147,8 @@ class LichessBot{
 						this.eventStreamer.close()
 						
 						this.thinking = true
+						
+						console.log(timecontrol)
 						
 						engine.gothen(timecontrol).then(result => {
 							let bestmove = result.bestmove
