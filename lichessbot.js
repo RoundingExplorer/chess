@@ -5,6 +5,8 @@ const { UciEngine } = require('./uci.js')
 const fs = require('fs')
 const path = require('path')
 
+let engine = new UciEngine(path.join(__dirname, "stockfish12m"))
+
 class LichessBot{
 	constructor(props){
 		this.props = props || {}
@@ -39,8 +41,6 @@ class LichessBot{
 		console.log("playing game", id)
 		
 		let gameFull, gameState, variant, initialFen, currentFen, moves, turn
-		
-		let engine = new UciEngine(path.join(__dirname, "stockfish12m"))
 		
 		this.gameStreamers[id] = new fetchutils.NdjsonStreamer({
 			url: lichessutils.streamBotGameUrl(id),
@@ -94,9 +94,9 @@ class LichessBot{
 						
 						if(gameFull.speed == "correspondence"){
 							gameFull.timecontrol = {
-								wtime: this.correspondenceThinkingTime,
+								wtime: this.co,
 								winc: 0,
-								btime: this.correspondenceThinkingTime,
+								btime: 60000,
 								binc: 0
 							}
 						}
@@ -153,12 +153,12 @@ class LichessBot{
 							console.log("bestmove", bestmove)
 							
 							if(bestmove){
+								this.thinking = false
 								lichessutils.postApi({
             						url: lichessutils.makeBotMoveUrl(id, bestmove), log: this.logApi, token: this.token,
             						callback: content => {
 										console.log("make move response", content)
-										this.gameStreamers[id].close()
-										this.thinking = false
+										this.gameStreamers[id].close()										
 										this.eventStreamer.stream()
 									}									
 								})
