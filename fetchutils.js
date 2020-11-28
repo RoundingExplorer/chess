@@ -53,10 +53,98 @@ function fetch7z(url, params){
 	})
 }
 
+class NdjsonStreamer{
+	constructor(props){
+		this.props = props || {}
+		
+		this.token = this.props.token
+	}
+	
+	close(){
+		if(this.readable){
+			this.readable.destroy()
+			
+			this.readable = null
+			
+			console.log("stream closed")
+		}else{
+			console.log("no readable to close")
+		}
+	}
+	
+	stream(){
+		this.readable = null
+		
+		let headers = {
+			Accept: "application/x-ndjson"
+		}
+
+		if(this.token) headers.Authorization = `Bearer ${this.token}`
+
+		let lastTick = new Date().getTime()
+
+		if(this.props.timeout){        
+			let checkInterval = setInterval(_=>{
+				if((new Date().getTime() - lastTick) > this.props.timeout * 1000){
+					clearInterval(checkInterval)
+
+					if(this.props.timeoutCallback) this.props.timeoutCallback()
+				}
+			}, props.timeout / 3)
+		}
+
+		let buffer = ""
+
+		console.log("streamNdjson", this.props)
+
+		fetch(this.props.url, {
+			headers: headers
+		})
+		.then(response => {
+			console.log("stream started")
+			
+			this.readable = response.body
+			
+			this.readable.on('end', _ => {
+				if(this.props.endcallback) this.props.endcallback()
+			})
+
+			this.readable.on('data', chunk => {                      
+				lastTick = new Date().getTime()
+
+				buffer += chunk.toString()
+
+				if(buffer.match(/\n/)){
+					let parts = buffer.split(/\n/)
+
+					buffer = parts.pop()
+
+					for(let part of parts){
+						try{
+							let blob = JSON.parse(part)
+
+							if(this.props.log) console.log(this.props.blob)
+
+							if(this.props.callback){
+								try{
+									this.props.callback(blob)	
+								}catch(err){
+									console.log("stream callback error", err)
+								}								
+							}
+						}catch(err){}
+					}
+				}
+			})
+		})
+	}
+}
+
 if(typeof module != "undefined"){
 	module.exports = {
 		fetchText: fetchText,
 		fetchBinary: fetchBinary,
-		fetch7z: fetch7z
+		fetch7z: fetch7z,
+		NdjsonStreamer: NdjsonStreamer
 	}
 }
