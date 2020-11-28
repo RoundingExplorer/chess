@@ -36,7 +36,9 @@ class LichessBot{
 	}
 	
 	playGame(id){		
-		if(this.thinking) return
+		if(this.thinking){
+			setTimeout(_ => this.playGame(id), 10000)
+		}
 		
 		console.log("playing game", id)
 		
@@ -53,133 +55,136 @@ class LichessBot{
 				
 				this.gameStreamers[id].stream()
 			},
-			callback: blob => {
-				if(!this.gameStreamers[id].streaming){
-					return
-				}
-				
-				if(this.thinking){
-					return
-				}
-				//console.log(blob)
-				if(blob.type == "gameFull"){
-					//fs.writeFileSync("stuff/gamefull.json", JSON.stringify(blob, null, 2))
-					console.log("game full", id)
-					
-					gameFull = blob
-					gameState = blob.state
-					
-					gameFull.botWhite = gameFull.white.name == this.botName
-					gameFull.botBlack = gameFull.black.name == this.botName
-					
-					gameFull.hasBot = gameFull.botWhite || gameFull.botBlack
-					
-					if(!gameFull.hasBot){
-						console.log("game full has no bot", this.botName)
-						
-						this.gameStreamers[id].close()
-					}else{
-						variant = gameFull.variant.key
-						
-						initialFen = gameFull.initialFen
-						
-						if(initialFen == "startpos") initialFen = undefined
-						
-						let result = makeUciMoves(variant, initialFen, [])
-						
-						if(result.success){
-							initialFen = result.fen
-							console.log("game initial fen", id, initialFen)
-						}else{
-							console.log("could not set up initial fen", id)
-						
+			callback: blob => {				
+				let processGameEvent = blob => {
+					if(this.thinking){
+						setTimeout(_ => processGameEvent(blob), 10000)
+					}
+					//console.log(blob)
+					if(blob.type == "gameFull"){
+						//fs.writeFileSync("stuff/gamefull.json", JSON.stringify(blob, null, 2))
+						console.log("game full", id)
+
+						gameFull = blob
+						gameState = blob.state
+
+						gameFull.botWhite = gameFull.white.name == this.botName
+						gameFull.botBlack = gameFull.black.name == this.botName
+
+						gameFull.hasBot = gameFull.botWhite || gameFull.botBlack
+
+						if(!gameFull.hasBot){
+							console.log("game full has no bot", this.botName)
+
 							this.gameStreamers[id].close()
-						}
-						
-						if(gameFull.speed == "correspondence"){
-							gameFull.timecontrol = {
-								wtime: this.correspondenceThinkingTime,
-								winc: 0,
-								btime: this.correspondenceThinkingTime,
-								binc: 0
+							
+							return
+						}else{
+							variant = gameFull.variant.key
+
+							initialFen = gameFull.initialFen
+
+							if(initialFen == "startpos") initialFen = undefined
+
+							let result = makeUciMoves(variant, initialFen, [])
+
+							if(result.success){
+								initialFen = result.fen
+								console.log("game initial fen", id, initialFen)
+							}else{
+								console.log("could not set up initial fen", id)
+
+								this.gameStreamers[id].close()
+								
+								return
+							}
+
+							if(gameFull.speed == "correspondence"){
+								gameFull.timecontrol = {
+									wtime: this.correspondenceThinkingTime,
+									winc: 0,
+									btime: this.correspondenceThinkingTime,
+									binc: 0
+								}
 							}
 						}
+					}else if(blob.type == "gameState"){
+						console.log("game state", id)					
+
+						gameState = blob
 					}
-				}else if(blob.type == "gameState"){
-					console.log("game state", id)					
-					
-					gameState = blob
-				}
-				
-				if(blob.type != "chatLine"){
-					moves = []
-					
-					currentFen = initialFen
-					
-					if(gameState.moves){
-						moves = gameState.moves.split(" ")
-						
-						let result = makeUciMoves(variant, initialFen, moves)
-						
-						if(result.success){
-							currentFen = result.fen
-							
-							console.log("game moves", moves)
-						}else{
-							console.log("could not set up state from", gameState.moves)
-						}
-					}
-					
-					console.log("game current fen", currentFen)
-					
-					let parts = currentFen.split(" ")
-					
-					let turn = parts[1]
-					
-					if( ((turn == "w") && gameFull.botWhite) || ((turn == "b") && gameFull.botBlack) ){
-						console.log("bot turn", id)
-						
-						engine.setoption("UCI_Chess960", variant == "chess960" ? "true" : "false")
-						
-						if(lichessutils.isStandard(variant)){
-							engine.setoption("UCI_Variant", "chess")
-						}else{
-							engine.setoption("UCI_Variant", variant == "threeCheck" ? "3check" : variant)
-						}
-						
-						engine.position("fen " + initialFen, moves)
-						
-						let timecontrol = gameFull.timecontrol || {
-							wtime: gameState.wtime,
-							winc: gameState.winc,
-							btime: gameState.btime,
-							binc: gameState.binc
-						}
-						
-						this.eventStreamer.close()
-						
-						this.thinking = true
-						
-						console.log(timecontrol)
-						
-						engine.gothen(timecontrol).then(result => {
-							let bestmove = result.bestmove
-							console.log("bestmove", id, bestmove)
-							
-							if(bestmove){
-								this.thinking = false								
-								lichessutils.postApi({
-            						url: lichessutils.makeBotMoveUrl(id, bestmove), log: this.logApi, token: this.token,
-            						callback: content => {
-										console.log("make move response", content)										
-									}									
-								})					
-								this.gameStreamers[id].close()										
-								setTimeout(_ => this.eventStreamer.stream(), 3000)
+
+					if(blob.type != "chatLine"){
+						moves = []
+
+						currentFen = initialFen
+
+						if(gameState.moves){
+							moves = gameState.moves.split(" ")
+
+							let result = makeUciMoves(variant, initialFen, moves)
+
+							if(result.success){
+								currentFen = result.fen
+
+								console.log("game moves", moves)
+							}else{
+								console.log("could not set up state from", gameState.moves)
+								
+								this.gameStreamers[id].close()
+								
+								return
 							}
-						})
-					}else{
-						console.log("opponent turn", id)
+						}
+
+						console.log("game current fen", currentFen)
+
+						let parts = currentFen.split(" ")
+
+						let turn = parts[1]
+
+						if( ((turn == "w") && gameFull.botWhite) || ((turn == "b") && gameFull.botBlack) ){
+							console.log("bot turn", id)
+
+							engine.setoption("UCI_Chess960", variant == "chess960" ? "true" : "false")
+
+							if(lichessutils.isStandard(variant)){
+								engine.setoption("UCI_Variant", "chess")
+							}else{
+								engine.setoption("UCI_Variant", variant == "threeCheck" ? "3check" : variant)
+							}
+
+							engine.position("fen " + initialFen, moves)
+
+							let timecontrol = gameFull.timecontrol || {
+								wtime: gameState.wtime,
+								winc: gameState.winc,
+								btime: gameState.btime,
+								binc: gameState.binc
+							}
+
+							this.thinking = true
+
+							console.log(timecontrol)
+
+							engine.gothen(timecontrol).then(result => {
+								let bestmove = result.bestmove
+								console.log("bestmove", id, bestmove)
+
+								if(bestmove){
+									this.thinking = false								
+									
+									lichessutils.postApi({
+										url: lichessutils.makeBotMoveUrl(id, bestmove), log: this.logApi, token: this.token,
+										callback: content => {
+											console.log("make move response", content)										
+										}									
+									})														
+								}
+							})
+						}else{
+							console.log("opponent turn", id)
+						}
 					}
 				}
 			},
@@ -211,8 +216,6 @@ class LichessBot{
 					if(this.eventStreamer.streaming){
 						this.playGame(blob.game.id)	
 					}
-					
-					//this.eventStreamer.close()
 				}
 			},
 			endcallback: _ => {
