@@ -144,7 +144,7 @@ class LichessBot{
 							if(result.success){
 								currentFen = result.fen
 
-								console.log("game moves", moves)
+								console.log("game moves", moves.join(" "))
 							}else{
 								console.log("could not set up state from", gameState.moves)
 								
