@@ -144,7 +144,7 @@ class LichessBot{
 						if(lichessutils.isStandard(variant)){
 							engine.setoption("UCI_Variant", "chess")
 						}else{
-							engine.setoption("UCI_Variant", variant == "threeCheck" ? "3check" : "variant")
+							engine.setoption("UCI_Variant", variant == "threeCheck" ? "3check" : variant)
 						}
 						
 						engine.position("fen " + initialFen, moves)
