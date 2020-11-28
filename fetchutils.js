@@ -54,25 +54,33 @@ function fetch7z(url, params){
 }
 
 class NdjsonStreamer{
-	constructor(props){
+	constructor(props){		
 		this.props = props || {}
 		
 		this.token = this.props.token
+		
+		this.streaming = false
 	}
 	
 	close(){
+		if(!this.streaming){
+			return
+		}		
+		
+		this.streaming = false
+		
 		if(this.readable){
 			this.readable.destroy()
 			
 			this.readable = null
 			
-			console.log("stream closed")
-		}else{
-			console.log("no readable to close")
+			console.log("stream closed", this.props.url)
 		}
 	}
 	
 	stream(){
+		this.streaming = true
+		
 		this.readable = null
 		
 		let headers = {
@@ -101,7 +109,7 @@ class NdjsonStreamer{
 			headers: headers
 		})
 		.then(response => {
-			console.log("stream started")
+			console.log("stream started", this.props.url)
 			
 			this.readable = response.body
 			
