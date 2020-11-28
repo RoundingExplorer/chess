@@ -16,13 +16,15 @@ class LichessBot{
 		
 		this.gameStreamers = {}
 		this.thinking = false
+		
+		this.correspondenceThinkingTime = this.props.correspondenceThinkingTime || process.env.CORRESPONDENCE_THINKING_TIME || 60000
 	}
 	
 	acceptChallenge(challenge){
 		console.log("accepting challenge", challenge.id)
 		
-		lichessUtils.postApi({
-			url: lichessUtils.acceptChallengeUrl(challenge.id), log: this.logApi, token: this.token,
+		lichessutils.postApi({
+			url: lichessutils.acceptChallengeUrl(challenge.id), log: this.logApi, token: this.token,
 			callback: content => console.log(`accept challenge response: ${content}`)
 		})
 	}
@@ -92,9 +94,9 @@ class LichessBot{
 						
 						if(gameFull.speed == "correspondence"){
 							gameFull.timecontrol = {
-								wtime: 60000,
+								wtime: this.correspondenceThinkingTime,
 								winc: 0,
-								btime: 60000,
+								btime: this.correspondenceThinkingTime,
 								binc: 0
 							}
 						}
