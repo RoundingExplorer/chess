@@ -19,6 +19,6 @@ const mongoClient = new MongoClient()
 
 const { LichessBot } = require('./lichessbot.js')
 
-const bot = new LichessBot()
+const bot = new LichessBot({logApi: true})
 
 bot.stream()
