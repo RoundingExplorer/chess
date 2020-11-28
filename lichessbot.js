@@ -20,6 +20,7 @@ class LichessBot{
 		this.thinking = false
 		
 		this.correspondenceThinkingTime = this.props.correspondenceThinkingTime || process.env.CORRESPONDENCE_THINKING_TIME || 60000
+		this.retryTimeout = this.props.retryTimeout || 10000
 	}
 	
 	acceptChallenge(challenge){
@@ -37,7 +38,14 @@ class LichessBot{
 	
 	playGame(id){		
 		if(this.thinking){
-			setTimeout(_ => this.playGame(id), 10000)
+			//console.log("thinking refused to play game", id)
+			
+			setTimeout(_ => {
+				//console.log("retry playing", id)
+				this.playGame(id)
+			}, this.retryTimeout)
+			
+			return
 		}
 		
 		console.log("playing game", id)
@@ -58,7 +66,14 @@ class LichessBot{
 			callback: blob => {				
 				let processGameEvent = blob => {
 					if(this.thinking){
-						setTimeout(_ => processGameEvent(blob), 10000)
+						//console.log("thinking refused to process game", id)
+						
+						setTimeout(_ => {
+							//console.log("retry processing", id)
+							processGameEvent(blob)
+						}, this.retryTimeout)
+						
+						return
 					}
 					//console.log(blob)
 					if(blob.type == "gameFull"){
@@ -163,9 +178,19 @@ class LichessBot{
 								binc: gameState.binc
 							}
 
-							this.thinking = true
-
 							console.log(timecontrol)
+							
+							if(this.thinking){
+								//console.log("already thinking when trying to think")
+								
+								setTimeout(_ => {
+									//console.log("retry process game after trying to think", id)
+								}, this.retryTimeout)
+								
+								return
+							}
+							
+							this.thinking = true
 
 							engine.gothen(timecontrol).then(result => {
 								let bestmove = result.bestmove
@@ -187,6 +212,8 @@ class LichessBot{
 						}
 					}
 				}
+				
+				processGameEvent(blob)
 			},
 			endcallback: _ => {
 				console.log("game stream ended", id)
@@ -214,7 +241,7 @@ class LichessBot{
 					this.challenge(blob.challenge)
 				}else if(blob.type == "gameStart"){
 					if(this.eventStreamer.streaming){
-						this.playGame(blob.game.id)	
+						this.playGame(blob.game.id)
 					}
 				}
 			},
