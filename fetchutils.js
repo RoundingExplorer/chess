@@ -38,7 +38,7 @@ function fetch7z(url, path, params){
 
 			myStream.on('data', function (data) {
 				if(data.status == "extracted"){
-					let file = data.file
+					let file = "unzip/" + data.file
 
 					console.log(`extracted ${file}`)
 
