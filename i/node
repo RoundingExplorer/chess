@@ -1,0 +1,7 @@
+echo "update to latest node"
+
+npm cache clean -f
+
+npm install -g n
+
+n latest

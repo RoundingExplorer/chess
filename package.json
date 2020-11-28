@@ -23,6 +23,8 @@
     "type": "git",
     "url": "https://github.com/browsercaptures/chess.git"
   },
-  "dependencies": {},
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  },
   "devDependencies": {}
 }
