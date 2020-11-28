@@ -21,7 +21,7 @@ function fetchBinary(url, path, params){
 	))
 }
 
-function fetch7z(url, path, params){
+function fetch7z(url, params){
 	let temp = "temp.7z"
 	
 	return new Promise((resolve, reject) => {
