@@ -1,1 +1,1 @@
-worker: node lichessbot.js
+worker: node chess.js
