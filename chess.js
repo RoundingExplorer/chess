@@ -17,19 +17,8 @@ const mongoClient = new MongoClient()
 	setTimeout(_ => mongoClient.close(), 5000)
 })*/
 
-const eventStreamer = new fetchutils.NdjsonStreamer({
-	url: `https://lichess.org/api/stream/event`,
-	token: process.env.TOKEN,
-	callback: blob => {
-		fs.writeFileSync("stuff/challenge.json", JSON.stringify(blob, null, 2))
-		
-		eventStreamer.close()
-		
-		process.exit(0)
-	},
-	endcallback: _ => {
-		console.log("stream ended")
-	}
-})
+const { LichessBot } = require('./lichessbot.js')
 
-eventStreamer.stream()
+const bot = new LichessBot()
+
+bot.stream()

@@ -90,7 +90,7 @@ class NdjsonStreamer{
 
 					if(this.props.timeoutCallback) this.props.timeoutCallback()
 				}
-			}, props.timeout / 3)
+			}, this.props.timeout / 3)
 		}
 
 		let buffer = ""
