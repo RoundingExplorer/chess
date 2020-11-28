@@ -21,11 +21,11 @@ const eventStreamer = new fetchutils.NdjsonStreamer({
 	url: `https://lichess.org/api/stream/event`,
 	token: process.env.TOKEN,
 	callback: blob => {
-		console.log("blob", JSON.stringify(blob))
+		fs.writeFileSync("stuff/challenge.json", JSON.stringify(blob, null, 2))
 		
 		eventStreamer.close()
 		
-		setTimeout(_ => eventStreamer.stream(), 5000)
+		process.exit(0)
 	},
 	endcallback: _ => {
 		console.log("stream ended")
@@ -33,4 +33,3 @@ const eventStreamer = new fetchutils.NdjsonStreamer({
 })
 
 eventStreamer.stream()
-

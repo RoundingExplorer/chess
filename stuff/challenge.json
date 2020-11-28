@@ -1,0 +1,39 @@
+{
+  "type": "challenge",
+  "challenge": {
+    "id": "d26Qe5wF",
+    "url": "https://lichess.org/d26Qe5wF",
+    "status": "created",
+    "challenger": {
+      "id": "schessnoob",
+      "name": "sChessNoob",
+      "title": null,
+      "rating": 2032,
+      "online": true
+    },
+    "destUser": {
+      "id": "normalbulletbot",
+      "name": "NormalBulletBot",
+      "title": "BOT",
+      "rating": 2359
+    },
+    "variant": {
+      "key": "standard",
+      "name": "Standard",
+      "short": "Std"
+    },
+    "rated": false,
+    "speed": "blitz",
+    "timeControl": {
+      "type": "clock",
+      "limit": 180,
+      "increment": 0,
+      "show": "3+0"
+    },
+    "color": "random",
+    "perf": {
+      "icon": ")",
+      "name": "Blitz"
+    }
+  }
+}
