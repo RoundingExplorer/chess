@@ -57,6 +57,10 @@ class LichessBot{
 				if(!this.gameStreamers[id].streaming){
 					return
 				}
+				
+				if(this.thinking){
+					return
+				}
 				//console.log(blob)
 				if(blob.type == "gameFull"){
 					//fs.writeFileSync("stuff/gamefull.json", JSON.stringify(blob, null, 2))
