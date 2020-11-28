@@ -139,6 +139,14 @@ class LichessBot{
 					if( ((turn == "w") && gameFull.botWhite) || ((turn == "b") && gameFull.botBlack) ){
 						console.log("bot turn", id)
 						
+						engine.setoption("UCI_Chess960", variant == "chess960" ? "true" : "false")
+						
+						if(lichessutils.isStandard(variant)){
+							engine.setoption("UCI_Variant", "chess")
+						}else{
+							engine.setoption("UCI_Variant", variant == "threeCheck" ? "3check" : "variant")
+						}
+						
 						engine.position("fen " + initialFen, moves)
 						
 						let timecontrol = gameFull.timecontrol || {
