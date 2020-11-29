@@ -43,6 +43,10 @@ class LichessBot{
 	}
 	
 	challenge(challenge){
+		if(challenge.speed == "correspondence"){
+			this.acceptChallenge(challenge)
+		}
+		
 		if(challenge.timeControl.limit < this.realTimeLimit){
 			console.log("declining", challenge.id, "real time game with less than", this.realTimeLimit, "initial time", challenge.timeControl.limit)
 			
