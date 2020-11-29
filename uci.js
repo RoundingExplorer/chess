@@ -4,6 +4,79 @@ function setLogEngine(le){
     logEngine = le
 }
 
+const DEFAULT_INITIAL_TIME = 120000
+
+class AnalyzeJob{
+	constructor(){
+		this.positionSpecifier = null
+		this.positionMoves = []
+		this.options = []
+		this.timecontrol = {
+			wtime: DEFAULT_INITIAL_TIME,
+			winc: 0,
+			btime: DEFAULT_INITIAL_TIME,
+			binc: 0
+		}
+		this.waiting = true
+		this.processing = false
+		this.resolve = null
+		this.engine = null		
+	}
+	
+	toString(){
+		return `AnalyzeJob [ ${this.options} ${this.positionSpecifier} ${this.positionMoves} ${JSON.stringify(this.timecontrol)} ]`
+	}
+	
+	setEngine(engine){
+		this.engine = engine
+		
+		return this
+	}
+	
+	setResolve(resolve){
+		this.resolve = resolve
+		
+		return this
+	}
+	
+	process(){
+		console.log(`processing ${this}`)
+		
+		for(let option of this.options){
+			this.engine.setoption(option[0], option[1])
+		}
+		
+		this.engine.position(this.positionSpecifier, this.positionMoves)
+		
+		this.waiting = false
+		this.processing = true
+		
+		this.engine.gothen(this.timecontrol).then(result => {
+			this.resolve(result)
+			
+			this.engine.shiftJob()
+		})
+	}
+	
+	position(specifier, moves){
+		this.positionSpecifier = specifier
+		if(moves){
+			this.positionMoves = moves
+		}
+		return this
+	}
+	
+	setoption(name, value){
+		this.options.push([name, value])
+		return this
+	}
+	
+	setTimecontrol(timecontrol){
+		this.timecontrol = timecontrol
+		return this
+	}
+}
+
 class UciEngine{
     constructor(path){
         this.path = path
@@ -11,6 +84,8 @@ class UciEngine{
         this.process = null
 
         this.spawn()
+		
+		this.queue = []
     }
 
     spawn(){
@@ -222,11 +297,57 @@ class UciEngine{
             this.go(props)
         })
     }
+	
+	get head(){
+		if(this.queue.length) return this.queue[0]
+		return null
+	}
+	
+	examineHead(){
+		console.log(`examining head`)
+		
+		if(!this.head){
+			console.log(`no head`)
+			
+			return
+		}
+		
+		if(this.head.waiting){
+			console.log(`found waiting job`)
+			
+			this.head.process()
+		}else{
+			console.log(`head processing ${this.head.processing}`)
+		}
+	}
+	
+	enqueueJob(analyzeJob){
+		return new Promise((resolve, reject) => {
+			logEngine(`enqueing job ${analyzeJob}`)
+		
+			analyzeJob
+				.setEngine(this)
+				.setResolve(resolve)
+
+			this.queue.push(analyzeJob)
+
+			this.examineHead()	
+		})		
+	}
+	
+	shiftJob(){
+		if(this.queue.length){
+			this.queue.shift()
+			
+			this.examineHead()
+		}
+	}
 }
 
 if(typeof module != "undefined"){
     module.exports = {
         setLogEngine: setLogEngine,
-        UciEngine: UciEngine
+        UciEngine: UciEngine,
+		AnalyzeJob: AnalyzeJob
     }    
 }

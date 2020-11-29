@@ -1,7 +1,7 @@
 const fetchutils = require('./fetchutils.js')
 const lichessutils = require('./lichessutils.js')
 const { makeUciMoves } = require('./scalachess.js')
-const { UciEngine } = require('./uci.js')
+const { UciEngine, AnalyzeJob } = require('./uci.js')
 const fs = require('fs')
 const path = require('path')
 
@@ -16,8 +16,7 @@ class LichessBot{
 		this.eventStreamTimeout = this.props.eventStreamTimeout || 10000
 		this.logApi = this.props.logApi || false
 		
-		this.gameStreamers = {}
-		this.thinking = false
+		this.gameStreamers = {}		
 		
 		this.correspondenceThinkingTime = this.props.correspondenceThinkingTime || process.env.CORRESPONDENCE_THINKING_TIME || 60000
 		this.retryTimeout = this.props.retryTimeout || 10000
@@ -56,17 +55,6 @@ class LichessBot{
 	}
 	
 	playGame(id){		
-		if(this.thinking){
-			//console.log("thinking refused to play game", id)
-			
-			setTimeout(_ => {
-				//console.log("retry playing", id)
-				this.playGame(id)
-			}, this.retryTimeout)
-			
-			return
-		}
-		
 		console.log("playing game", id)
 		
 		let gameFull, gameState, variant, initialFen, currentFen, moves, turn
@@ -84,16 +72,6 @@ class LichessBot{
 			},
 			callback: blob => {				
 				let processGameEvent = blob => {
-					if(this.thinking){
-						//console.log("thinking refused to process game", id)
-						
-						setTimeout(_ => {
-							//console.log("retry processing", id)
-							processGameEvent(blob)
-						}, this.retryTimeout)
-						
-						return
-					}
 					//console.log(blob)
 					if(blob.type == "gameFull"){
 						//fs.writeFileSync("stuff/gamefull.json", JSON.stringify(blob, null, 2))
@@ -173,16 +151,18 @@ class LichessBot{
 
 						if( ((turn == "w") && gameFull.botWhite) || ((turn == "b") && gameFull.botBlack) ){
 							console.log("bot turn", id)
+							
+							let analyzeJob = new AnalyzeJob()
 
-							engine.setoption("UCI_Chess960", variant == "chess960" ? "true" : "false")
+							analyzeJob.setoption("UCI_Chess960", variant == "chess960" ? "true" : "false")
 
 							if(lichessutils.isStandard(variant)){
-								engine.setoption("UCI_Variant", "chess")
+								analyzeJob.setoption("UCI_Variant", "chess")
 							}else{
-								engine.setoption("UCI_Variant", variant == "threeCheck" ? "3check" : variant)
+								analyzeJob.setoption("UCI_Variant", variant == "threeCheck" ? "3check" : variant)
 							}
 
-							engine.position("fen " + initialFen, moves)
+							analyzeJob.position("fen " + initialFen, moves)
 
 							let timecontrol = {
 								wtime: Math.min(gameState.wtime, this.correspondenceThinkingTime),
@@ -190,28 +170,14 @@ class LichessBot{
 								btime: Math.min(gameState.btime, this.correspondenceThinkingTime),
 								binc: 0
 							}
-
-							console.log(timecontrol)
 							
-							if(this.thinking){
-								//console.log("already thinking when trying to think")
-								
-								setTimeout(_ => {
-									//console.log("retry process game after trying to think", id)
-								}, this.retryTimeout)
-								
-								return
-							}
-							
-							this.thinking = true
+							analyzeJob.setTimecontrol(timecontrol)
 
-							engine.gothen(timecontrol).then(result => {
+							engine.enqueueJob(analyzeJob).then(result => {
 								let bestmove = result.bestmove
 								console.log("bestmove", id, bestmove)
 
 								if(bestmove){
-									this.thinking = false								
-									
 									lichessutils.postApi({
 										url: lichessutils.makeBotMoveUrl(id, bestmove), log: this.logApi, token: this.token,
 										callback: content => {
