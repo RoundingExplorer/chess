@@ -30,6 +30,6 @@ Stockfish 12 multi variant https://s3-us-west-2.amazonaws.com/variant-stockfish/
 
 https://lichess.org/@/SuperBrainiac
 
-## Author on lichess
+## Author Dude on lichess
 
 https://lichess.org/@/Soumilmitra
